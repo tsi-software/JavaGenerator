@@ -10,7 +10,8 @@ public class ProtractedGeneratorExample extends ThreadedGenerator<String> {
      * @param args
      */
     public static void main(String[] args) {
-        try (ProtractedGeneratorExample generator = new ProtractedGeneratorExample()) {
+        ProtractedGeneratorExample generator = new ProtractedGeneratorExample();
+        try {
             Iterator<String> iter = generator.iterator();
 
             if (iter.hasNext()) {
@@ -29,7 +30,10 @@ public class ProtractedGeneratorExample extends ThreadedGenerator<String> {
             }
 
             // Note: we don't have to iterate through to completion if we don't want to.
-            // The try-with-resources statement will properly clean-up.
+            // The 'generator.close();' statement below will clean-up properly.
+
+        } finally {
+            generator.close();
         }
     }
 
