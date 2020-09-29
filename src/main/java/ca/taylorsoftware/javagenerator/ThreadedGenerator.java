@@ -99,7 +99,7 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
                 try {
                     yieldReturnQueue.wait();
                 } catch (InterruptedException ex) {
-                    // Ignore the InterruptedException and continue looping.
+                    // Ignore the InterruptedException and keep looping.
                 }
             }
 
@@ -132,7 +132,7 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
             //      up to the hasNext() method on the foreground thread.
             generator();
         } catch (InterruptedException ex) {
-            // Ignore the InterruptedException and continue looping.
+            // Ignore the InterruptedException and keep looping.
         } finally {
             synchronized (yieldReturnQueue) {
                 isThreadCancelled = true;
@@ -177,7 +177,7 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
                 try {
                     yieldReturnQueue.wait();
                 } catch (InterruptedException ex) {
-                    // Ignore the InterruptedException and continue looping.
+                    // Ignore the InterruptedException and keep looping.
                 }
             }
 

@@ -94,7 +94,7 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                     // Wait for the background thread to return control to the foreground.
                     syncObj.wait();
                 } catch (InterruptedException ex) {
-                    // Ignore the InterruptedException and continue looping.
+                    // Ignore the InterruptedException and keep looping.
                 }
             }
 
@@ -133,7 +133,7 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                         // Wait for the foreground thread to return control to the background.
                         syncObj.wait();
                     } catch (InterruptedException ex) {
-                        // Ignore the InterruptedException and continue looping.
+                        // Ignore the InterruptedException and keep looping.
                     }
                 }//while
                 if (isThreadCancelled) {
@@ -209,7 +209,7 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                     // Block the background until the foreground thread calls 'hasNext()'.
                     syncObj.wait();
                 } catch (InterruptedException ex) {
-                    // Ignore the InterruptedException and continue looping.
+                    // Ignore the InterruptedException and keep looping.
                 }
             }//while
 
