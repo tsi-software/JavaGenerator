@@ -1,0 +1,239 @@
+package ca.taylorsoftware.javagenerator;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+
+/**
+ * The key design principal behind this class is that, at any given time,
+ * either the foreground thread is active or the background thread is active,
+ * but both CANNOT be active at the same time, thereby providing a thread safe environment
+ * for both the foreground thread and the background thread.
+ * @param <T>
+ */
+public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<T>, Iterator<T>, Runnable {
+
+    enum WhoHasTheBall {FOREGROUND, BACKGROUND};
+    private volatile WhoHasTheBall whoHasTheBall = WhoHasTheBall.FOREGROUND;
+
+    private final Object syncObj = new Object();
+
+    /** The background thread. */
+    private final Thread thread;
+
+    /** The next value that is ready. */
+    private T nextValue = null;
+
+    /** Used to determine if the background thread needs to quit. */
+    private volatile boolean isThreadCancelled = false;
+
+    /** Is foreground process cancelled. */
+    private volatile boolean isClosed = false;
+
+
+    public ThreadSafeGenerator() {
+        thread = new Thread(this);
+        thread.start();
+    }
+
+
+    @Override
+    public void close() {
+        if (Thread.currentThread() == thread) {
+            // Background thread is calling 'close()'.
+            if (!isThreadCancelled) {
+                synchronized (syncObj) {
+                    isThreadCancelled = true;
+                    syncObj.notifyAll();
+                }
+            }
+        } else {
+            // Foreground thread is calling 'close()'.
+            if (!isClosed) {
+                isClosed = true;
+
+                if (!isThreadCancelled) {
+                    synchronized (syncObj) {
+                        isThreadCancelled = true;
+                        syncObj.notifyAll();
+                    }
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public Iterator<T> iterator() {
+        return this;
+    }
+
+
+    @Override
+    public boolean hasNext() {
+        if (isClosed) {
+            return false;
+        }
+
+        boolean result = false;
+
+        message("hasNext()...\n");
+        synchronized (syncObj) {
+            if (whoHasTheBall == WhoHasTheBall.FOREGROUND) {
+                whoHasTheBall = WhoHasTheBall.BACKGROUND;
+                syncObj.notifyAll();
+            }
+            while (whoHasTheBall != WhoHasTheBall.FOREGROUND) {
+                if (isClosed || isThreadCancelled) {
+                    // If 'close()' has been called then drop out of this loop and return false.
+                    // If the background thread has finished then don't wait for anything else
+                    //  to be added by yieldReturn(...).
+                    break;
+                }
+
+                try {
+                    // Wait for the background thread to return control to the foreground.
+                    syncObj.wait();
+                } catch (InterruptedException ex) {
+                    //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                }
+            }
+
+            result = !isClosed && !isThreadCancelled;
+        }//synchronized
+        message("hasNext() done.\n");
+
+        return result;
+    }
+
+
+    @Override
+    public T next() {
+        if (isClosed) {
+            throw new NoSuchElementException();
+        }
+
+        message("next()...\n");
+        T tmp = nextValue;
+        nextValue = null;
+
+        message("next() done.\n");
+        return tmp;
+    }
+
+
+    @Override
+    public void run() {
+        try {
+            synchronized (syncObj) {
+                //---------------------------------------------------------------------------------------
+                // Wait for the first time for the foreground thread to call 'hasNext()', then proceed.
+                //---------------------------------------------------------------------------------------
+                while (whoHasTheBall != WhoHasTheBall.BACKGROUND) {
+                    if (isThreadCancelled) {
+                        // If the background thread has been cancelled then drop out of this loop and return false.
+                        break;
+                    }
+                    try {
+                        // Wait for the foreground thread to return control to the background.
+                        syncObj.wait();
+                    } catch (InterruptedException ex) {
+                        //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                    }
+                }//while
+                if (isThreadCancelled) {
+                    throw new InterruptedException();
+                }
+            }//synchronized
+
+            // Run the generator from within the background thread.
+            generator();
+            //TODO: consider providing a mechanism to pass any exception caught here
+            //      up to the hasNext() method on the foreground thread.
+
+        } catch (InterruptedException ex) {
+            message("run() - generator(): %s\n", ex.toString());
+        } finally {
+            synchronized (syncObj) {
+                isThreadCancelled = true;
+                whoHasTheBall = WhoHasTheBall.FOREGROUND;
+                message("run() - generator() finished.\n");
+                syncObj.notifyAll();
+            }
+        }
+    }
+
+
+    protected boolean canKeepGoing() {
+        return !isThreadCancelled;
+    }
+
+
+    /**
+     * The descendant implementation of this method is where all the work happens.
+     * <br>
+     * <b>Important! This method runs in a background thread.</b><br>
+     * However, the purpose of this class is to provide a Thread Safe Environment for this code to run.
+     * @throws InterruptedException 
+     */
+    protected abstract void generator() throws InterruptedException;
+
+
+    protected void yieldReturn(T item) throws InterruptedException {
+        // Enforce that this method is only called from the background 'thread'.
+        if (Thread.currentThread() != thread) {
+            String msg = "yieldReturn(...) must only be called from the background generator thread!";
+            throw new InterruptedException(msg);
+        }
+
+        if (isThreadCancelled) {
+            throw new InterruptedException();
+        }
+
+        message("yieldReturn()...\n");
+        synchronized (syncObj) {
+            if (isThreadCancelled) {
+                throw new InterruptedException();
+            }
+
+            //---------------------------------------------------------------------------------------
+            // All of the surrounding code is just to set these values safely and at the right time.
+            //---------------------------------------------------------------------------------------
+            nextValue = item;
+            whoHasTheBall = WhoHasTheBall.FOREGROUND;
+            syncObj.notifyAll();
+
+            //--------------------------------------------------------------------------------------------
+            // Wait for the foreground thread to call 'hasNext()' before COMPUTING the next value.
+            //--------------------------------------------------------------------------------------------
+            while (whoHasTheBall != WhoHasTheBall.BACKGROUND) {
+                if (isThreadCancelled) {
+                    // If the background thread has been cancelled then drop out of this loop and return false.
+                    break;
+                }
+
+                try {
+                    // Block the background until the foreground thread calls 'hasNext()'.
+                    syncObj.wait();
+                } catch (InterruptedException ex) {
+                    //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                }
+            }//while
+
+            if (isThreadCancelled) {
+                throw new InterruptedException();
+            }
+        }//synchronized
+    }
+
+
+    /**
+     * For testing and debugging purposes only.
+     * @param format
+     * @param args
+     */
+    static synchronized void message(String format, Object...args) {
+        //System.out.format(format, args);
+    }
+
+}
