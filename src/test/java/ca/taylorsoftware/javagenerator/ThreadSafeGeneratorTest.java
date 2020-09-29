@@ -91,7 +91,7 @@ class ThreadSafeGeneratorTest {
         try (SimpleGenerator iter = new SimpleGenerator()) {
             int counter = 0;
             for (String it : iter) {
-                SimpleGenerator.message("%s\n", it);
+                System.out.format("%s\n", it);
                 ++counter;
                 if (counter == 2) {
                     iter.close();
@@ -209,7 +209,7 @@ class ThreadSafeGeneratorTest {
 
                 ++counter;
                 assertEquals(counter, it);
-                RandomDelayGenerator.message("%d\n", it);
+                System.out.format("%d\n", it);
                 RandomDelayGenerator.randomDelay(counter, 100);
 
                 iter.setForegroundRunning(false);

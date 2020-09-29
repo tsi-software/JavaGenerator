@@ -77,7 +77,6 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
 
         boolean result = false;
 
-        message("hasNext()...\n");
         synchronized (syncObj) {
             if (whoHasTheBall == WhoHasTheBall.FOREGROUND) {
                 whoHasTheBall = WhoHasTheBall.BACKGROUND;
@@ -95,13 +94,12 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                     // Wait for the background thread to return control to the foreground.
                     syncObj.wait();
                 } catch (InterruptedException ex) {
-                    //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                    // Ignore the InterruptedException and continue looping.
                 }
             }
 
             result = !isClosed && !isThreadCancelled;
         }//synchronized
-        message("hasNext() done.\n");
 
         return result;
     }
@@ -113,11 +111,8 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
             throw new NoSuchElementException();
         }
 
-        message("next()...\n");
         T tmp = nextValue;
         nextValue = null;
-
-        message("next() done.\n");
         return tmp;
     }
 
@@ -138,7 +133,7 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                         // Wait for the foreground thread to return control to the background.
                         syncObj.wait();
                     } catch (InterruptedException ex) {
-                        //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                        // Ignore the InterruptedException and continue looping.
                     }
                 }//while
                 if (isThreadCancelled) {
@@ -152,12 +147,11 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
             //      up to the hasNext() method on the foreground thread.
 
         } catch (InterruptedException ex) {
-            message("run() - generator(): %s\n", ex.toString());
+            // Ignore the InterruptedException.
         } finally {
             synchronized (syncObj) {
                 isThreadCancelled = true;
                 whoHasTheBall = WhoHasTheBall.FOREGROUND;
-                message("run() - generator() finished.\n");
                 syncObj.notifyAll();
             }
         }
@@ -190,7 +184,6 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
             throw new InterruptedException();
         }
 
-        message("yieldReturn()...\n");
         synchronized (syncObj) {
             if (isThreadCancelled) {
                 throw new InterruptedException();
@@ -216,7 +209,7 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                     // Block the background until the foreground thread calls 'hasNext()'.
                     syncObj.wait();
                 } catch (InterruptedException ex) {
-                    //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                    // Ignore the InterruptedException and continue looping.
                 }
             }//while
 
@@ -224,16 +217,6 @@ public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<
                 throw new InterruptedException();
             }
         }//synchronized
-    }
-
-
-    /**
-     * For testing and debugging purposes only.
-     * @param format
-     * @param args
-     */
-    static synchronized void message(String format, Object...args) {
-        //System.out.format(format, args);
     }
 
 }

@@ -86,7 +86,6 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
         boolean result = false;
         nextForegroundValue = null;
 
-        message("hasNext(): isEmpty()...\n");
         synchronized (yieldReturnQueue) {
             // If necessary, wait for an item to be added to the queue.
             while (yieldReturnQueue.isEmpty()) {
@@ -100,7 +99,7 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
                 try {
                     yieldReturnQueue.wait();
                 } catch (InterruptedException ex) {
-                    //message("hasNext(): isEmpty(): %s\n", ex.toString());
+                    // Ignore the InterruptedException and continue looping.
                 }
             }
 
@@ -112,7 +111,6 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
                 yieldReturnQueue.notifyAll();
             }
         }//synchronized
-        message("hasNext(): isEmpty() done.\n");
 
         return result;
     }
@@ -134,11 +132,10 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
             //      up to the hasNext() method on the foreground thread.
             generator();
         } catch (InterruptedException ex) {
-            message("run() - generator(): %s\n", ex.toString());
+            // Ignore the InterruptedException and continue looping.
         } finally {
             synchronized (yieldReturnQueue) {
                 isThreadCancelled = true;
-                message("run() - generator() finished.\n");
                 yieldReturnQueue.notifyAll();
             }
         }
@@ -171,7 +168,6 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
             throw new InterruptedException();
         }
 
-        message("yieldReturn(): (queue size=%d)\n", yieldReturnQueue.size());
         synchronized (yieldReturnQueue) {
             // If necessary, wait until space becomes available in the queue.
             while (yieldReturnQueue.size() >= maxQueueSize) {
@@ -181,7 +177,7 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
                 try {
                     yieldReturnQueue.wait();
                 } catch (InterruptedException ex) {
-                    //message("yieldReturn(): %s\n", ex.toString());
+                    // Ignore the InterruptedException and continue looping.
                 }
             }
 
@@ -191,17 +187,6 @@ public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>
             yieldReturnQueue.addLast(item);
             yieldReturnQueue.notifyAll();
         }
-        message("yieldReturn(): done.\n");
-    }
-
-
-    /**
-     * For testing and debugging purposes only.
-     * @param format
-     * @param args
-     */
-    static synchronized void message(String format, Object...args) {
-        //System.out.format(format, args);
     }
 
 }

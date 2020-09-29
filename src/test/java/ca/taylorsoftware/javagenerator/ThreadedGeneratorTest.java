@@ -100,7 +100,7 @@ class ThreadedGeneratorTest {
         try (SimpleGenerator iter = new SimpleGenerator()) {
             int counter = 0;
             for (String it : iter) {
-                SimpleGenerator.message("%s\n", it);
+                System.out.format("%s\n", it);
                 ++counter;
                 if (counter == 2) {
                     iter.close();
@@ -116,9 +116,7 @@ class ThreadedGeneratorTest {
     private static class DelayedStartGenerator extends ThreadedGenerator<String> {
         @Override
         protected void generator() throws InterruptedException {
-            message("DelayedStartGenerator() - sleep(1000)\n");
             Thread.sleep(1000);
-            message("DelayedStartGenerator() - sleep done.\n");
             yieldReturn("one");
             yieldReturn("two");
             yieldReturn("three");
@@ -154,9 +152,7 @@ class ThreadedGeneratorTest {
             yieldReturn("one");
             yieldReturn("two");
             yieldReturn("three");
-            message("DelayedFinishGenerator() - sleep(1000)\n");
             Thread.sleep(1000);
-            message("DelayedFinishGenerator() - sleep done.\n");
         }
     }
 
@@ -237,7 +233,7 @@ class ThreadedGeneratorTest {
 
                     ++counter;
                     assertEquals(counter, it);
-                    DelayedGenerator.message("%d\n", it);
+                    System.out.format("%d\n", it);
                     Thread.sleep(100);
 
                     iter.setForegroundRunning(false);
