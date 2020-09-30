@@ -4,6 +4,11 @@ import java.util.Iterator;
 
 import ca.taylorsoftware.javagenerator.ThreadedGenerator;
 
+/**
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
+ */
 public class ProtractedGeneratorExample extends ThreadedGenerator<String> {
 
     /**

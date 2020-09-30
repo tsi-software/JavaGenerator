@@ -3,8 +3,10 @@ package ca.taylorsoftware.javagenerator.examples;
 import ca.taylorsoftware.javagenerator.ThreadSafeGenerator;
 
 /**
-*
-*/
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
+ */
 public class SimpleGeneratorExample extends ThreadSafeGenerator<String> {
 
     /**

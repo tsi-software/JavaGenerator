@@ -6,6 +6,13 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 
+/**
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
+ *
+ * @param <T>
+ */
 public abstract class ThreadedGenerator<T> implements AutoCloseable, Iterable<T>, Iterator<T>, Runnable {
     /** The default maximum number of elements allowed in yieldReturnQueue. */
     private static final int DEFAULT_MAX_QUEUE_SIZE = 1;

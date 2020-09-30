@@ -12,6 +12,10 @@ import ca.taylorsoftware.javagenerator.ThreadedGenerator;
  *
  * To run this example:
  * mvn clean install exec:java -Dexec.mainClass="ca.taylorsoftware.javagenerator.examples.FileDirectoryTraversalExample"
+ * 
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
  */
 public class FileDirectoryTraversalExample extends ThreadedGenerator<File> {
 

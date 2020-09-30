@@ -9,6 +9,11 @@ import java.util.NoSuchElementException;
  * either the foreground thread is active or the background thread is active,
  * but both CANNOT be active at the same time, thereby providing a thread safe environment
  * for both the foreground thread and the background thread.
+ * 
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
+ * 
  * @param <T>
  */
 public abstract class ThreadSafeGenerator<T> implements AutoCloseable, Iterable<T>, Iterator<T>, Runnable {

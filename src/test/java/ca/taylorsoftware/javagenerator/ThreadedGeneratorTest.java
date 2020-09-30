@@ -12,6 +12,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 
+/**
+ * @author Warren Taylor
+ * Created: 2020-09-29
+ * Copyright (c) 2020 Warren Taylor.  All right reserved.
+ */
 class ThreadedGeneratorTest {
 
     //-------------------------------------------------------------------------
