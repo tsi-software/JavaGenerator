@@ -5,16 +5,16 @@ So, Java apparently does not have a built-in implementation of the Generator Pat
 After searching the Internet for a while I found a few Java Libraries but they didn't exactly fit my needs.
 
 ## Features
-My bucket list included:
+My bucket list includes:
 
 - AutoCloseable - _(also known as the try-with-resources statement)_ when the generator is finished, or there is an exception, I just want it to clean-up after itself.
 - Iterable&lt;T&gt; - To keep code simple I want to be able to use the "for each" operator.
-- Iterator&lt;T&gt; - OK, this is the essence of a generator.
+- Iterator&lt;T&gt; - The essence of a generator.
 
 ## ThreadSafeGenerator&lt;T&gt;
 I took a second look at what I actually wanted and realized that
 the Generator Pattern (as implemented in Python and C#) is an __*emulation*__ of
-multi-threaded behavior but in a thread safe manner.
+multi-threaded behavior but done in a thread safe manner.
 
 OK, so simply write a threaded Producer/Consumer implementation
 where, at any given point in time, one thread is active and the other thread blocked waiting.
@@ -22,17 +22,17 @@ Then switch atomically at the appropriate time ... guaranteeing thread-safe exec
 It turned out to be a bit more complicated than that, but not too bad.
 
 ## ThreadedGenerator&lt;T&gt;
-Then recalling that other Generator Pattern implementation are an __*emulation*__ of multi-threaded behavior,
+Recalling that other Generator Pattern implementations are an __*emulation*__ of multi-threaded behavior,
 why not write a truly multi-threaded Generator.
-This led to the second variant, which would have a queue of a predetermined maximum size
+This led to the second variant, which has a queue of a predetermined maximum size
 allowing the background generator thread to run on ahead of the foreground thread but by a controlled amount.
-This variant requires the extra care and effort of writing the generator code in a thread-safe manner
+This variant requires the extra care and effort of writing your generator code in a thread-safe manner
 but with potentially faster running code.
 
 ## Implementation Details
 I was originally hoping to implement both of these variants with a single base class
 containing the common functionality and inheriting classes with specific functionality.
-However, this turned out to be a lot more complicated than writing the two classed separately.
+However, this turned out to be a lot more complicated than writing the two classes separately.
 
 ## Usage
 The whole point of a generator is to convert a more complicated algorithm
@@ -48,7 +48,7 @@ public class SimpleGeneratorExample extends ThreadSafeGenerator<String> { ... }
 ```
 
 In the business end of the generator you write your code and call 'yieldReturn(...)'
-whenever you want to pass data back to your iterator:
+whenever you want to pass data over to your iterator in the foreground thread:
 ```java
     @Override
     protected void generator() throws InterruptedException {
@@ -58,7 +58,7 @@ whenever you want to pass data back to your iterator:
     }
 ```
 
-To make use of the generator,
+To make use of your generator,
 open it using a "try-with-resources" statement
 then iterate using a "for each" statement.
 ```java
@@ -69,3 +69,16 @@ then iterate using a "for each" statement.
   }
 ```
 
+Or you could do it the protracted way:
+```java
+    ProtractedGeneratorExample generator = new ProtractedGeneratorExample();
+    try {
+        Iterator<String> iter = generator.iterator();
+        while (iter.hasNext()) {
+            System.out.format("%s\n", iter.next());
+        }
+    } finally {
+        generator.close();
+    }
+  }
+```
