@@ -64,7 +64,6 @@ However, this turned out to be a lot more complicated than writing the two class
 ## Usage
 The whole point of a generator is to convert an arbitrarily complicated algorithm
 into a "flat" serial iterator.
-
 On the surface ThreadSafeGenerator&lt;T&gt; and ThreadedGenerator&lt;T&gt; are called in the same manner
 and could be used interchangeably.
 However, your ThreadedGenerator&lt;T&gt; code must be thread safe, otherwise bad and unexpected things will happen.
@@ -74,7 +73,7 @@ Creating your generator class is straight forward:
 public class SimpleGeneratorExample extends ThreadSafeGenerator<String> { ... }
 ```
 
-In the business end of the generator you write your code and call 'yieldReturn(...)'
+In the business end of the generator you write your code and call 'yieldReturn(...);'
 whenever you want to pass data over to your iterator in the foreground thread:
 ```java
     @Override
@@ -85,7 +84,7 @@ whenever you want to pass data over to your iterator in the foreground thread:
     }
 ```
 _Note: 'yieldReturn(...)' is inherited from
-ThreadSafeGenerator&lt;T&gt; or ThreadedGenerator&lt;T&gt;._
+ThreadSafeGenerator&lt;T&gt; and ThreadedGenerator&lt;T&gt;._
 
 To make use of your generator,
 open it using a "try-with-resources" statement
@@ -100,7 +99,7 @@ then iterate using a "for each" statement.
 
 Or you could do it the protracted way:
 ```java
-    ProtractedGeneratorExample generator = new ProtractedGeneratorExample();
+    SimpleGeneratorExample generator = new SimpleGeneratorExample();
     try {
         Iterator<String> iter = generator.iterator();
         while (iter.hasNext()) {
@@ -109,7 +108,6 @@ Or you could do it the protracted way:
     } finally {
         generator.close();
     }
-  }
 ```
 
 https://github.com/tsi-software/JavaGenerator
