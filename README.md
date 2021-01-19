@@ -70,7 +70,7 @@ However, your ThreadedGenerator&lt;T&gt; code must be thread safe, otherwise bad
 
 Creating your generator class is straight forward:
 ```java
-public class SimpleGeneratorExample extends ThreadSafeGenerator<String> { ... }
+public class SimpleGeneratorExample extends ThreadSafeGenerator<String> {...}
 ```
 
 In the business end of the generator you write your code and call 'yieldReturn(...);'
@@ -90,11 +90,11 @@ To make use of your generator,
 open it using a "try-with-resources" statement
 then iterate using a "for each" statement.
 ```java
-  try (SimpleGeneratorExample generator = new SimpleGeneratorExample()) {
-    for (String item : generator) {
-      System.out.format("%s\n", item);
+    try (SimpleGeneratorExample generator = new SimpleGeneratorExample()) {
+        for (String item : generator) {
+            System.out.format("%s\n", item);
+        }
     }
-  }
 ```
 
 Or you could do it the protracted way:
