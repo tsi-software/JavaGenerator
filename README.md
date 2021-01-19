@@ -1,24 +1,51 @@
-# JavaGenerator
-*Copyright &copy; 2020 Warren Taylor.  All right reserved.*
+# Java Generator
+*Copyright &copy; 2021 Warren Taylor.  All right reserved.*
 
-So, Java apparently does not have a built-in implementation of the Generator Pattern like, for example, Python and C#.
-After searching the Internet for a while I found a few Java Libraries but they didn't exactly fit my needs.
+https://github.com/tsi-software/JavaGenerator
+
+If you happen to be proficient with programming languages like C# or Python then you may have used their native implementations of the Generator Pattern. If you're also a Java programmer you may know that Java does not natively implement the Generator Pattern.
+
+I was recently working on a Java project that screamed out for the Generator Pattern. So, after searching the Internet for a while I found a few Java libraries and gave them a try. Unfortunately, they weren’t exactly what I was looking for.
 
 ## Features
-My bucket list includes:
+The features I needed:
 
-- AutoCloseable - _(also known as the try-with-resources statement)_ when the generator is finished, or there is an exception, I just want it to clean-up after itself.
+- AutoCloseable _(also known as the try-with-resources statement)_ - when the generator finishes, or there is an exception, it simply cleans up after itself.
 - Iterable&lt;T&gt; - To keep code simple I want to be able to use the "for each" operator.
-- Iterator&lt;T&gt; - The essence of a generator.
+- Iterator&lt;T&gt; - This is the essence of the generator pattern.
+- No special codes or hacks required to mark the end-of-data.
+- Simple and robust to use.
 
+## What is a Generator?
+Lets take a step back. What is a generator and why did it become a thing?
+Ok, I’m not going into a full history lesson (that's what Google is for) but here’s the deal.
+Multi-threaded programming is hard.
+It’s hard because you can end up putting exponential time and effort into making sure each thread does not “step on” what each of the other threads are doing.
+In other words, making threads play nice is like herding cats.
+
+One of the reasons Generators became a thing, is they allow code to take advantage of multi-threaded like behavior but still guarantee thread safety.
+With Generators you don’t have to spend that exponential time and effort making sure the threads play nice (i.e. there is only one cat to herd).
+
+The astute reader
+_(this is not light reading so you must be astute to have gotten this far)_
+will now be asking the question “when and why would I need this?”
+Because there are times when we need to generate data independently of the main thread,
+otherwise, the code complexity goes through the roof.
+For example, you have a complex input filtering process that needs to skip and/or modify data based on the previous, current, and next records.
+And you have a main process that jumps around a lot but still requires a deterministic serialized input stream.
+
+## Insight
+After having taken a second look at what I actually wanted it became clear that
+the Generator Pattern (as implemented in Python and C#), at its most abstract,
+is simply a thread safe __*emulation*__ of multi-threaded behavior
+using something similar to cooperative multitasking.
+Ok, so maybe that’s not entirely simple.
+
+# Implementation
 ## ThreadSafeGenerator&lt;T&gt;
-I took a second look at what I actually wanted and realized that
-the Generator Pattern (as implemented in Python and C#) is an __*emulation*__ of
-multi-threaded behavior but done in a thread safe manner.
-
-OK, so simply write a threaded Producer/Consumer implementation
-where, at any given point in time, one thread is active and the other thread blocked waiting.
-Then switch atomically at the appropriate time ... guaranteeing thread-safe execution.
+This class is most easily described as a two threaded implementation of the Producer/Consumer pattern where,
+at any given point in time, one thread is active and one thread blocked waiting for the other.
+Then atomically swap active/blocking at the appropriate time ... guaranteeing thread-safe execution.
 It turned out to be a bit more complicated than that, but not too bad.
 
 ## ThreadedGenerator&lt;T&gt;
@@ -27,7 +54,7 @@ why not write a truly multi-threaded Generator.
 This led to the second variant, which has a queue of a predetermined maximum size
 allowing the background generator thread to run on ahead of the foreground thread but by a controlled amount.
 This variant requires the extra care and effort of writing your generator code in a thread-safe manner
-but with potentially faster running code.
+but with potentially much faster running code.
 
 ## Implementation Details
 I was originally hoping to implement both of these variants with a single base class
@@ -35,14 +62,14 @@ containing the common functionality and inheriting classes with specific functio
 However, this turned out to be a lot more complicated than writing the two classes separately.
 
 ## Usage
-The whole point of a generator is to convert a more complicated algorithm
+The whole point of a generator is to convert an arbitrarily complicated algorithm
 into a "flat" serial iterator.
 
-On the surface ThreadSafeGenerator and ThreadedGenerator are called in the same manner
+On the surface ThreadSafeGenerator&lt;T&gt; and ThreadedGenerator&lt;T&gt; are called in the same manner
 and could be used interchangeably.
-However, your ThreadedGenerator code must be thread safe, otherwise bad and unexpected things will happen.
+However, your ThreadedGenerator&lt;T&gt; code must be thread safe, otherwise bad and unexpected things will happen.
 
-Creating you generator class is straight forward:
+Creating your generator class is straight forward:
 ```java
 public class SimpleGeneratorExample extends ThreadSafeGenerator<String> { ... }
 ```
@@ -57,6 +84,8 @@ whenever you want to pass data over to your iterator in the foreground thread:
         yieldReturn("three");
     }
 ```
+_Note: 'yieldReturn(...)' is inherited from
+ThreadSafeGenerator&lt;T&gt; or ThreadedGenerator&lt;T&gt;._
 
 To make use of your generator,
 open it using a "try-with-resources" statement
@@ -82,3 +111,5 @@ Or you could do it the protracted way:
     }
   }
 ```
+
+https://github.com/tsi-software/JavaGenerator
